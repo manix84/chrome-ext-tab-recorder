@@ -1,0 +1,123 @@
+name: Release Chrome Extension
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - manifest.json
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release even if the version did not increase'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Install jq and zip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq zip
+      - name: Read manifest versions
+        id: versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          NEW_VERSION="$(jq -r '.version' manifest.json)"
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            OLD_VERSION="$(git show HEAD^:manifest.json | jq -r '.version')"
+          else
+            OLD_VERSION="0.0.0"
+          fi
+          echo "old_version=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Old version: $OLD_VERSION"
+          echo "New version: $NEW_VERSION"
+
+      - name: Decide whether to release
+        id: decision
+        shell: bash
+        env:
+          FORCE_RELEASE: ${{ inputs.force_release }}
+          OLD_VERSION: ${{ steps.versions.outputs.old_version }}
+          NEW_VERSION: ${{ steps.versions.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          echo "FORCE_RELEASE=$FORCE_RELEASE"
+          echo "OLD_VERSION=$OLD_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION"
+          if [ "$FORCE_RELEASE" = "true" ]; then
+            echo "Manual force release requested."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if dpkg --compare-versions "$NEW_VERSION" gt "$OLD_VERSION"; then
+            echo "Version increased. Release will be created."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version did not increase. Release will be skipped."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Stop if no release is needed
+        if: steps.decision.outputs.should_release != 'true'
+        run: echo "No release needed."
+
+      - name: Set up Chrome
+        if: steps.decision.outputs.should_release == 'true'
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Restore signing key
+        if: steps.decision.outputs.should_release == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/chrome-key
+          echo "${{ secrets.CHROME_EXTENSION_PEM_BASE64 }}" | base64 --decode > /tmp/chrome-key/extension.pem
+          chmod 600 /tmp/chrome-key/extension.pem
+      - name: Pack CRX
+        if: steps.decision.outputs.should_release == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          chrome \
+            --headless=new \
+            --disable-gpu \
+            --no-sandbox \
+            --pack-extension="$GITHUB_WORKSPACE" \
+            --pack-extension-key="/tmp/chrome-key/extension.pem"
+          mv "$GITHUB_WORKSPACE.crx" "build/one-click-tab-recorder-${{ steps.versions.outputs.new_version }}.crx"
+      - name: Create ZIP artifact
+        if: steps.decision.outputs.should_release == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r "build/one-click-tab-recorder-${{ steps.versions.outputs.new_version }}.zip" . \
+            -x ".git/*" ".github/*" "build/*"
+      - name: Create GitHub release
+        if: steps.decision.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.versions.outputs.new_version }}"
+          TAG="v$VERSION"
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "Release $TAG" \
+            "build/one-click-tab-recorder-$VERSION.crx" \
+            "build/one-click-tab-recorder-$VERSION.zip"
