@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="g1" x1="48" y1="40" x2="464" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF5A52"/>
+      <stop offset="1" stop-color="#B90E0A"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="92" y1="100" x2="420" y2="412" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1E232B"/>
+      <stop offset="1" stop-color="#0A0D11"/>
+    </linearGradient>
+  </defs>
+
+  <!-- main recorder body -->
+  <rect x="24" y="88" width="404" height="336" rx="52" fill="url(#g2)"/>
+
+  <!-- lens housing -->
+  <circle cx="220" cy="256" r="112" fill="url(#g1)"/>
+  <circle cx="220" cy="256" r="68" fill="#FFF4F4"/>
+  <circle cx="220" cy="256" r="44" fill="#E11D22"/>
+
+  <!-- status light -->
+  <circle cx="356" cy="168" r="28" fill="#FF4B4B"/>
+
+  <!-- top grip -->
+  <rect x="88" y="40" width="152" height="60" rx="26" fill="#12161C"/>
+
+  <!-- screen wedge / camera prism -->
+  <path d="M356 208L488 148V364L356 304V208Z" fill="#151A21"/>
+
+  <!-- subtle highlights -->
+  <path d="M72 132C72 112.118 88.118 96 108 96H220V120H108C101.373 120 96 125.373 96 132V380C96 386.627 101.373 392 108 392H220V416H108C88.118 416 72 399.882 72 380V132Z" fill="white" fill-opacity="0.08"/>
+  <circle cx="182" cy="214" r="18" fill="white" fill-opacity="0.22"/>
+</svg>
