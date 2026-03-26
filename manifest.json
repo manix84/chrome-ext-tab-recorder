@@ -1,15 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Current Tab Recorder",
+  "name": "One-Click Tab Recorder",
   "version": "1.0.0",
   "author": "Rob Taylor <manix84@gmail.com>",
   "description": "Click once to record the current tab. Click again to stop and save a WebM recording.",
-  "permissions": [
-    "tabCapture",
-    "offscreen",
-    "downloads",
-    "storage"
-  ],
+  "permissions": ["tabCapture", "offscreen", "downloads", "storage"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
