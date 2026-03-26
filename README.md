@@ -1,4 +1,7 @@
 # chrome-ext-tab-recorder
+
+[![Release Chrome Extension](https://github.com/manix84/chrome-ext-tab-recorder/actions/workflows/release-extension.yml/badge.svg)](https://github.com/manix84/chrome-ext-tab-recorder/actions/workflows/release-extension.yml)
+
 A simple chrome tab recording extension. Press the icon, it starts recording. Press it again, it stops recording, and saves to your default directory.
 
 ## What is this?
