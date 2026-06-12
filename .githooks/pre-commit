@@ -1,0 +1,109 @@
+#!/bin/sh
+set -eu
+
+manifest_path="manifest.json"
+package_path="package.json"
+bump_kind="${VERSION_BUMP:-patch}"
+
+PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+export PATH
+
+if [ ! -f "$manifest_path" ]; then
+  echo "pre-commit: $manifest_path not found; cannot bump extension version." >&2
+  exit 1
+fi
+
+if [ ! -f "$package_path" ]; then
+  echo "pre-commit: $package_path not found; cannot keep package version in sync." >&2
+  exit 1
+fi
+
+case "$bump_kind" in
+  patch|minor)
+    ;;
+  major)
+    if [ "${ALLOW_MAJOR_VERSION_BUMP:-}" != "1" ]; then
+      echo "pre-commit: major version bumps are blocked by default." >&2
+      echo "Set ALLOW_MAJOR_VERSION_BUMP=1 VERSION_BUMP=major only for a full reset/restart." >&2
+      exit 1
+    fi
+    ;;
+  *)
+    echo "pre-commit: VERSION_BUMP must be patch, minor, or major." >&2
+    exit 1
+    ;;
+esac
+
+if ! git diff --quiet -- "$manifest_path" "$package_path"; then
+  echo "pre-commit: $manifest_path or $package_path has unstaged changes." >&2
+  echo "Stage or stash them before committing so the version bump is explicit." >&2
+  exit 1
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "pre-commit: node was not found on PATH." >&2
+  echo "Install Node or add it to PATH for Git hooks." >&2
+  exit 1
+fi
+
+node - "$manifest_path" "$package_path" "$bump_kind" <<'NODE'
+const fs = require("fs");
+
+const [, , manifestPath, packagePath, bumpKind] = process.argv;
+const manifestContent = fs.readFileSync(manifestPath, "utf8");
+const packageContent = fs.readFileSync(packagePath, "utf8");
+const manifest = JSON.parse(manifestContent);
+const packageJson = JSON.parse(packageContent);
+const version = manifest.version;
+
+if (typeof version !== "string") {
+  throw new Error("manifest.json must contain a string version");
+}
+
+const parts = version.split(".").map((part) => {
+  if (!/^\d+$/.test(part)) {
+    throw new Error(`Invalid manifest version: ${version}`);
+  }
+
+  return Number(part);
+});
+
+if (parts.length !== 3) {
+  throw new Error(`Expected manifest version in major.minor.patch form: ${version}`);
+}
+
+if (bumpKind === "major") {
+  parts[0] += 1;
+  parts[1] = 0;
+  parts[2] = 0;
+} else if (bumpKind === "minor") {
+  parts[1] += 1;
+  parts[2] = 0;
+} else {
+  parts[2] += 1;
+}
+
+const newVersion = parts.join(".");
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function replaceJsonVersion(content, currentVersion, newVersion, label) {
+  const versionPattern = new RegExp(`("version"\\s*:\\s*)"${escapeRegExp(currentVersion)}"`);
+  const updated = content.replace(versionPattern, `$1"${newVersion}"`);
+
+  if (updated === content) {
+    throw new Error(`Could not update version field in ${label}`);
+  }
+
+  return updated;
+}
+
+if (typeof packageJson.version !== "string") {
+  throw new Error("package.json must contain a string version");
+}
+
+fs.writeFileSync(manifestPath, replaceJsonVersion(manifestContent, version, newVersion, manifestPath));
+fs.writeFileSync(packagePath, replaceJsonVersion(packageContent, packageJson.version, newVersion, packagePath));
+console.log(`pre-commit: bumped ${manifestPath} and ${packagePath} to ${newVersion}`);
+NODE
+
+git add "$manifest_path" "$package_path"

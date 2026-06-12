@@ -1,0 +1,16 @@
+{
+  "name": "one-click-tab-recorder",
+  "version": "1.0.1",
+  "private": true,
+  "description": "A no-account Chrome extension for recording the current tab.",
+  "license": "MIT",
+  "author": "Rob Taylor <manix84@gmail.com>",
+  "type": "commonjs",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "test": "node --check background.js && node --check offscreen.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
