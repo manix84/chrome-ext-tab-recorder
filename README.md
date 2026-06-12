@@ -28,6 +28,20 @@ If you just want to hit record, capture what is on screen, and get a saved file 
 - 🔴 Show a steady `REC` badge instead.
 - 🖱️ Request cursor-free recordings when Chrome supports it.
 
+## 🖼️ Screenshots
+
+### ⏱️ Timer Badge
+
+![Recording timer badge screenshot](store-assets/screenshots/01-recording-timer.png)
+
+### 💾 Local Download
+
+![Local recording download screenshot](store-assets/screenshots/02-local-download.png)
+
+### ⚙️ Options
+
+![Recorder options screenshot](store-assets/screenshots/03-options.png)
+
 ## 🔒 Privacy
 
 - 🙅 No accounts
@@ -49,6 +63,12 @@ Run local syntax checks:
 
 ```sh
 npm test
+```
+
+Regenerate Chrome Web Store screenshots:
+
+```sh
+npm run screenshots
 ```
 
 The pre-commit hook bumps `manifest.json` and `package.json` together.

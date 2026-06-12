@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>One-Click Tab Recorder Screenshots</title>
+    <style>
+      :root {
+        --ink: #17202a;
+        --muted: #5d6878;
+        --line: #d8dee8;
+        --panel: #ffffff;
+        --soft: #f5f7fb;
+        --red: #d93025;
+        --green: #138a53;
+        --blue: #1a73e8;
+        --yellow: #fbbc04;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 1280px;
+        height: 800px;
+        margin: 0;
+        overflow: hidden;
+        background: #edf1f7;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .shot {
+        display: none;
+        width: 1280px;
+        height: 800px;
+        padding: 54px;
+        background:
+          linear-gradient(135deg, rgba(26, 115, 232, 0.14), transparent 36%),
+          linear-gradient(315deg, rgba(19, 138, 83, 0.12), transparent 34%),
+          #f6f8fc;
+      }
+
+      .shot.active {
+        display: grid;
+        grid-template-columns: 1fr 390px;
+        gap: 38px;
+        align-items: center;
+      }
+
+      .browser {
+        overflow: hidden;
+        border: 1px solid #c8d1df;
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 24px 70px rgba(45, 58, 82, 0.18);
+      }
+
+      .browser-bar {
+        display: grid;
+        grid-template-columns: 86px 1fr auto;
+        gap: 14px;
+        align-items: center;
+        height: 52px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+        background: #f9fbff;
+      }
+
+      .window-dots {
+        display: flex;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .dot.red { background: #ff5f57; }
+      .dot.yellow { background: #ffbd2e; }
+      .dot.green { background: #28c840; }
+
+      .address {
+        height: 30px;
+        padding: 5px 12px;
+        border: 1px solid #dfe4ee;
+        border-radius: 8px;
+        background: #fff;
+        color: #667286;
+        font-size: 13px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .toolbar-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: #e9eef8;
+      }
+
+      .extension-icon {
+        position: relative;
+        width: 34px;
+        height: 34px;
+      }
+
+      .extension-icon img {
+        width: 34px;
+        height: 34px;
+      }
+
+      .badge {
+        position: absolute;
+        right: -18px;
+        bottom: -9px;
+        min-width: 42px;
+        padding: 2px 5px;
+        border-radius: 8px;
+        background: var(--red);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .page {
+        min-height: 560px;
+        padding: 34px;
+        background: #fff;
+      }
+
+      .demo-layout {
+        display: grid;
+        grid-template-columns: 1fr 260px;
+        gap: 28px;
+      }
+
+      .hero-panel {
+        min-height: 438px;
+        padding: 30px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(217, 48, 37, 0.11), transparent 42%),
+          linear-gradient(315deg, rgba(26, 115, 232, 0.12), transparent 38%),
+          #fbfcff;
+      }
+
+      .recording-frame {
+        display: grid;
+        place-items: center;
+        height: 250px;
+        margin-top: 28px;
+        border: 2px solid rgba(217, 48, 37, 0.45);
+        border-radius: 8px;
+        background: #101820;
+        color: #fff;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      }
+
+      .playhead {
+        width: 76%;
+        height: 12px;
+        border-radius: 8px;
+        background: linear-gradient(90deg, var(--red) 42%, #374151 42%);
+      }
+
+      .side-panel {
+        display: grid;
+        gap: 14px;
+      }
+
+      .mini-card {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--soft);
+      }
+
+      .copy h1 {
+        margin: 0 0 18px;
+        font-size: 48px;
+        line-height: 1.04;
+        letter-spacing: 0;
+      }
+
+      .copy p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 20px;
+      }
+
+      .feature-list {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .download-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .download-row {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        gap: 14px;
+        align-items: center;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .file-icon {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: rgba(26, 115, 232, 0.12);
+        color: var(--blue);
+        font-size: 22px;
+      }
+
+      .saved {
+        color: var(--green);
+        font-weight: 800;
+      }
+
+      .options-page {
+        min-height: 560px;
+        background: #f7f8fb;
+      }
+
+      .options-frame {
+        width: 640px;
+        margin: 38px auto;
+      }
+
+      .options-header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .options-header img {
+        width: 48px;
+        height: 48px;
+      }
+
+      .option-group {
+        margin-top: 16px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .option-row,
+      .radio-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 16px;
+      }
+
+      .radio-row {
+        justify-content: flex-start;
+        margin-top: 12px;
+      }
+
+      .toggle {
+        width: 48px;
+        height: 28px;
+        padding: 3px;
+        border-radius: 999px;
+        background: var(--red);
+      }
+
+      .toggle::after {
+        content: "";
+        display: block;
+        width: 22px;
+        height: 22px;
+        margin-left: 20px;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .radio {
+        width: 20px;
+        height: 20px;
+        border: 6px solid var(--red);
+        border-radius: 50%;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      strong {
+        display: block;
+      }
+
+      small {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <section id="01-recording-timer" class="shot">
+      <div class="browser">
+        <div class="browser-bar">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="address">https://example.com/product-demo</div>
+          <div class="toolbar">
+            <span class="toolbar-icon"></span>
+            <span class="toolbar-icon"></span>
+            <span class="extension-icon">
+              <img src="../icons/icon-48.png" alt="">
+              <span class="badge">0:42</span>
+            </span>
+          </div>
+        </div>
+        <div class="page demo-layout">
+          <div class="hero-panel">
+            <h2>Quarterly Demo</h2>
+            <p class="muted">The current tab is being captured with audio.</p>
+            <div class="recording-frame">
+              <div>
+                <div style="font-size: 72px; text-align: center;">🎬</div>
+                <div class="playhead"></div>
+              </div>
+            </div>
+          </div>
+          <aside class="side-panel">
+            <div class="mini-card"><strong>🔴 Recording</strong><small>Badge shows elapsed time</small></div>
+            <div class="mini-card"><strong>🔊 Tab audio</strong><small>Captured with the video</small></div>
+            <div class="mini-card"><strong>🖱️ Cursor option</strong><small>Keep it or hide it</small></div>
+          </aside>
+        </div>
+      </div>
+      <div class="copy">
+        <h1>One click. Current tab. Done.</h1>
+        <p>Capture quick demos, tutorials, walkthroughs, and bug reports without accounts or upload steps.</p>
+        <ul class="feature-list">
+          <li>🎥 Records tab video</li>
+          <li>🔊 Includes tab audio</li>
+          <li>⏱️ Timer badge while recording</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="02-local-download" class="shot">
+      <div class="browser">
+        <div class="browser-bar">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="address">chrome://downloads</div>
+          <div class="toolbar">
+            <span class="toolbar-icon"></span>
+            <span class="extension-icon">
+              <img src="../icons/icon-48.png" alt="">
+            </span>
+          </div>
+        </div>
+        <div class="page">
+          <h2>Downloads</h2>
+          <p class="muted">Your recording is saved straight to your device.</p>
+          <div class="download-list" style="margin-top: 34px;">
+            <div class="download-row">
+              <div class="file-icon">🎞️</div>
+              <div>
+                <strong>Tab Recording - Product Demo - 2026-06-12_09-41-18.webm</strong>
+                <small>Local WebM recording</small>
+              </div>
+              <span class="saved">Saved</span>
+            </div>
+            <div class="download-row">
+              <div class="file-icon">🔒</div>
+              <div>
+                <strong>No cloud upload. No account. No tracking.</strong>
+                <small>The extension does its work inside the browser.</small>
+              </div>
+              <span class="saved">Private</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="copy">
+        <h1>Local files, not mystery clouds.</h1>
+        <p>Stop recording and your WebM is downloaded automatically. The extension does not collect, upload, or share the recording.</p>
+        <ul class="feature-list">
+          <li>💾 Automatic download</li>
+          <li>🔒 Local-first privacy</li>
+          <li>🙅 No analytics or trackers</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="03-options" class="shot">
+      <div class="browser">
+        <div class="browser-bar">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="address">chrome-extension://one-click-tab-recorder/options.html</div>
+          <div class="toolbar">
+            <span class="extension-icon">
+              <img src="../icons/icon-48.png" alt="">
+              <span class="badge">REC</span>
+            </span>
+          </div>
+        </div>
+        <div class="options-page">
+          <div class="options-frame">
+            <header class="options-header">
+              <img src="../icons/icon-48.png" alt="">
+              <div>
+                <h2>🎥 Recorder Options</h2>
+                <p class="muted">Keep the extension quiet, local, and predictable.</p>
+              </div>
+            </header>
+            <section class="option-group">
+              <h3>🎬 Recording</h3>
+              <div class="option-row">
+                <span><strong>Hide mouse cursor</strong><small>Request cursor-free recordings when Chrome supports it.</small></span>
+                <span class="toggle"></span>
+              </div>
+            </section>
+            <section class="option-group">
+              <h3>🔴 Badge</h3>
+              <div class="radio-row"><span class="radio"></span><span><strong>Timer</strong><small>Show elapsed recording time.</small></span></div>
+              <div class="radio-row"><span style="width: 20px;"></span><span><strong>REC</strong><small>Show a steady REC badge.</small></span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div class="copy">
+        <h1>Make recordings fit the moment.</h1>
+        <p>Choose a timer or REC badge, and request cursor-free captures for cleaner demos.</p>
+        <ul class="feature-list">
+          <li>⚙️ Simple options</li>
+          <li>🖱️ Optional cursor hiding</li>
+          <li>🔴 Timer or REC badge</li>
+        </ul>
+      </div>
+    </section>
+
+    <script>
+      const params = new URLSearchParams(location.search);
+      const shot = params.get("shot") || "01-recording-timer";
+      document.getElementById(shot)?.classList.add("active");
+    </script>
+  </body>
+</html>
