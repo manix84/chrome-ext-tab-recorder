@@ -1,6 +1,6 @@
 {
   "name": "one-click-tab-recorder",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "A no-account Chrome extension for recording the current tab.",
   "license": "MIT",
@@ -8,7 +8,7 @@
   "type": "commonjs",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "test": "node --check background.js && node --check offscreen.js"
+    "test": "node --check background.js && node --check offscreen.js && node --check options.js"
   },
   "engines": {
     "node": ">=18"

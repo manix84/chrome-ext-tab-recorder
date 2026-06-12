@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>One-Click Tab Recorder Options</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="options-shell">
+      <header class="options-header">
+        <img src="icons/icon-48.png" alt="" width="48" height="48">
+        <div>
+          <h1>🎥 Recorder Options</h1>
+          <p>Keep the extension quiet, local, and predictable.</p>
+        </div>
+      </header>
+
+      <section class="option-group" aria-labelledby="recording-heading">
+        <h2 id="recording-heading">🎬 Recording</h2>
+
+        <label class="option-row" for="hide-cursor">
+          <span>
+            <strong>Hide mouse cursor</strong>
+            <small>Request cursor-free recordings when Chrome supports it.</small>
+          </span>
+          <input id="hide-cursor" type="checkbox">
+        </label>
+      </section>
+
+      <section class="option-group" aria-labelledby="badge-heading">
+        <h2 id="badge-heading">🔴 Badge</h2>
+
+        <fieldset>
+          <legend>Recording badge style</legend>
+
+          <label class="radio-row" for="badge-timer">
+            <input id="badge-timer" name="badge-mode" type="radio" value="timer">
+            <span>
+              <strong>Timer</strong>
+              <small>Show elapsed recording time.</small>
+            </span>
+          </label>
+
+          <label class="radio-row" for="badge-rec">
+            <input id="badge-rec" name="badge-mode" type="radio" value="rec">
+            <span>
+              <strong>REC</strong>
+              <small>Show a steady REC badge.</small>
+            </span>
+          </label>
+        </fieldset>
+      </section>
+
+      <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

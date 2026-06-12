@@ -1,13 +1,27 @@
 const OFFSCREEN_PATH = "offscreen.html";
 const OFFSCREEN_URL = chrome.runtime.getURL(OFFSCREEN_PATH);
+const DEFAULT_OPTIONS = {
+  badgeMode: "timer",
+  hideCursorFromRecordings: false,
+};
 
 let badgeTimerInterval = null;
 let recordingStartedAt = null;
+let activeBadgeMode = DEFAULT_OPTIONS.badgeMode;
 
 async function getRecordingState() {
   const { isRecording = false } =
     await chrome.storage.session.get("isRecording");
   return isRecording;
+}
+
+async function getOptions() {
+  const options = await chrome.storage.local.get(DEFAULT_OPTIONS);
+
+  return {
+    badgeMode: options.badgeMode === "rec" ? "rec" : "timer",
+    hideCursorFromRecordings: Boolean(options.hideCursorFromRecordings),
+  };
 }
 
 function formatBadgeElapsed(milliseconds) {
@@ -56,7 +70,7 @@ async function updateRecordingBadge() {
   const elapsed = Date.now() - recordingStartedAt;
 
   await chrome.action.setBadgeText({
-    text: formatBadgeElapsed(elapsed),
+    text: activeBadgeMode === "rec" ? "REC" : formatBadgeElapsed(elapsed),
   });
 
   await chrome.action.setTitle({
@@ -64,10 +78,11 @@ async function updateRecordingBadge() {
   });
 }
 
-async function startBadgeTimer(startedAt) {
+async function startBadgeTimer(startedAt, badgeMode = DEFAULT_OPTIONS.badgeMode) {
   stopBadgeTimer();
 
   recordingStartedAt = startedAt;
+  activeBadgeMode = badgeMode;
 
   await chrome.action.setBadgeBackgroundColor({ color: "#d93025" });
   await chrome.action.setBadgeTextColor({ color: "#ffffff" });
@@ -89,17 +104,21 @@ function stopBadgeTimer() {
   }
 
   recordingStartedAt = null;
+  activeBadgeMode = DEFAULT_OPTIONS.badgeMode;
 }
 
 async function setRecordingState(isRecording, tabId = null) {
   const { recordingStartedAt: storedStartedAt = null } =
     await chrome.storage.session.get("recordingStartedAt");
   const nextStartedAt = isRecording ? storedStartedAt || Date.now() : null;
+  const options = isRecording ? await getOptions() : DEFAULT_OPTIONS;
+  const nextBadgeMode = isRecording ? options.badgeMode : null;
 
   await chrome.storage.session.set({
     isRecording,
     recordingTabId: tabId,
     recordingStartedAt: nextStartedAt,
+    badgeMode: nextBadgeMode,
   });
 
   await chrome.action.setTitle({
@@ -107,7 +126,7 @@ async function setRecordingState(isRecording, tabId = null) {
   });
 
   if (isRecording) {
-    await startBadgeTimer(nextStartedAt);
+    await startBadgeTimer(nextStartedAt, nextBadgeMode);
   } else {
     stopBadgeTimer();
     await chrome.action.setBadgeText({ text: "" });
@@ -174,6 +193,21 @@ chrome.runtime.onInstalled.addListener(async () => {
   await setRecordingState(false, null);
 });
 
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local" || !changes.badgeMode || !recordingStartedAt) {
+    return;
+  }
+
+  activeBadgeMode = changes.badgeMode.newValue === "rec" ? "rec" : "timer";
+
+  chrome.storage.session.set({ badgeMode: activeBadgeMode }).catch((error) => {
+    console.error("Badge option persistence failed:", error);
+  });
+  updateRecordingBadge().catch((error) => {
+    console.error("Badge option update failed:", error);
+  });
+});
+
 chrome.action.onClicked.addListener(async (tab) => {
   try {
     const isRecording = await getRecordingState();
@@ -186,6 +220,8 @@ chrome.action.onClicked.addListener(async (tab) => {
     if (!tab?.id) {
       throw new Error("No active tab ID found.");
     }
+
+    const options = await getOptions();
 
     await ensureOffscreenDocument();
 
@@ -200,6 +236,7 @@ chrome.action.onClicked.addListener(async (tab) => {
         streamId,
         tabId: tab.id,
         tabTitle: tab.title || "Current Tab",
+        hideCursor: options.hideCursorFromRecordings,
       },
     });
   } catch (error) {

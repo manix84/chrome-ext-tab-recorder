@@ -22,6 +22,12 @@ If you just want to hit record, capture what is on screen, and get a saved file 
 2. Click the icon again to **stop recording**.
 3. The recording is automatically saved to your default downloads directory.
 
+## ⚙️ Options
+
+- ⏱️ Show elapsed recording time on the extension badge.
+- 🔴 Show a steady `REC` badge instead.
+- 🖱️ Request cursor-free recordings when Chrome supports it.
+
 ## 🔒 Privacy
 
 - 🙅 No accounts

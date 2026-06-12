@@ -22,7 +22,48 @@ function pickSupportedMimeType() {
   return '';
 }
 
-async function startRecording({ streamId, tabTitle }) {
+function buildTabCaptureConstraints(streamId, hideCursor) {
+  const video = {
+    mandatory: {
+      chromeMediaSource: 'tab',
+      chromeMediaSourceId: streamId
+    }
+  };
+
+  if (hideCursor) {
+    video.cursor = 'never';
+  }
+
+  return {
+    audio: {
+      mandatory: {
+        chromeMediaSource: 'tab',
+        chromeMediaSourceId: streamId
+      }
+    },
+    video
+  };
+}
+
+async function getTabMediaStream(streamId, hideCursor) {
+  try {
+    return await navigator.mediaDevices.getUserMedia(
+      buildTabCaptureConstraints(streamId, hideCursor)
+    );
+  } catch (error) {
+    if (!hideCursor) {
+      throw error;
+    }
+
+    console.warn('Cursor hiding is not supported for this capture; retrying with the cursor visible.');
+
+    return navigator.mediaDevices.getUserMedia(
+      buildTabCaptureConstraints(streamId, false)
+    );
+  }
+}
+
+async function startRecording({ streamId, tabTitle, hideCursor = false }) {
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     throw new Error('A recording is already in progress.');
   }
@@ -30,20 +71,7 @@ async function startRecording({ streamId, tabTitle }) {
   currentTabTitle = tabTitle || 'Current Tab';
   recordedChunks = [];
 
-  mediaStream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      mandatory: {
-        chromeMediaSource: 'tab',
-        chromeMediaSourceId: streamId
-      }
-    },
-    video: {
-      mandatory: {
-        chromeMediaSource: 'tab',
-        chromeMediaSourceId: streamId
-      }
-    }
-  });
+  mediaStream = await getTabMediaStream(streamId, hideCursor);
 
   audioContext = new AudioContext();
   audioSource = audioContext.createMediaStreamSource(mediaStream);

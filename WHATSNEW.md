@@ -2,6 +2,9 @@
 
 ## 🧪 Unreleased
 
+- ⚙️ Added an options page for recording and badge preferences.
+- 🖱️ Added a setting to hide the mouse cursor from recordings when Chrome supports it.
+- 🔴 Added a badge setting for Timer or steady `REC`, with Timer as the default.
 - ⏱️ Changed the extension badge to show elapsed recording time instead of blinking `REC`.
 - 🧭 Updated the extension tooltip while recording to include the full elapsed time.
 

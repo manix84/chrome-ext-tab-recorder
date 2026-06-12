@@ -24,6 +24,7 @@ The recording:
 - 🎬 Captures video and audio from the active tab
 - 💻 Is processed locally in the browser
 - 📁 Is saved directly to your device through Chrome downloads
+- 🖱️ Can optionally request that Chrome hides the mouse cursor from the recording
 
 Recorded data is never sent to an external server.
 
@@ -43,7 +44,7 @@ Used to save the recorded video file to your local device after recording is com
 
 ### 💾 `storage`
 
-Used to store minimal session state, such as whether a recording is active, so the extension can keep its button state accurate.
+Used to store minimal local state, such as whether a recording is active and your extension options for badge display and cursor capture.
 
 ## 🌐 Remote Code
 
@@ -63,6 +64,7 @@ All recording and processing happens locally in your browser. Since recordings d
 - ⏹️ Recording can be stopped at any time by clicking the icon again
 - 📁 Recordings are saved locally and remain under your control
 - 🧹 The extension does not keep copies after saving
+- ⚙️ Options are stored locally by the browser and can be changed from the extension options page
 
 ## 🔄 Policy Updates
 
