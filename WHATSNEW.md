@@ -1,5 +1,10 @@
 # ✨ What's New
 
+## 🧪 Unreleased
+
+- ⏱️ Changed the extension badge to show elapsed recording time instead of blinking `REC`.
+- 🧭 Updated the extension tooltip while recording to include the full elapsed time.
+
 ## 🚀 1.0.0
 
 - 🎥 Added one-click recording for the current Chrome tab.

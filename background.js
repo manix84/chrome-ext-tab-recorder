@@ -1,8 +1,8 @@
 const OFFSCREEN_PATH = "offscreen.html";
 const OFFSCREEN_URL = chrome.runtime.getURL(OFFSCREEN_PATH);
 
-let badgeBlinkInterval = null;
-let badgeVisible = true;
+let badgeTimerInterval = null;
+let recordingStartedAt = null;
 
 async function getRecordingState() {
   const { isRecording = false } =
@@ -10,48 +10,106 @@ async function getRecordingState() {
   return isRecording;
 }
 
-async function startBadgeBlink() {
-  stopBadgeBlink();
+function formatBadgeElapsed(milliseconds) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
 
-  badgeVisible = true;
+  if (minutes < 10) {
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours < 10) {
+    return `${hours}h${String(remainingMinutes).padStart(2, "0")}`;
+  }
+
+  return `${hours}h`;
+}
+
+function formatTitleElapsed(milliseconds) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = [];
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+
+  parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+
+  return parts.join(" ");
+}
+
+async function updateRecordingBadge() {
+  if (!recordingStartedAt) return;
+
+  const elapsed = Date.now() - recordingStartedAt;
+
+  await chrome.action.setBadgeText({
+    text: formatBadgeElapsed(elapsed),
+  });
+
+  await chrome.action.setTitle({
+    title: `Stop Recording (${formatTitleElapsed(elapsed)})`,
+  });
+}
+
+async function startBadgeTimer(startedAt) {
+  stopBadgeTimer();
+
+  recordingStartedAt = startedAt;
 
   await chrome.action.setBadgeBackgroundColor({ color: "#d93025" });
   await chrome.action.setBadgeTextColor({ color: "#ffffff" });
-  await chrome.action.setBadgeText({ text: "REC" });
+  await updateRecordingBadge();
 
-  badgeBlinkInterval = setInterval(async () => {
+  badgeTimerInterval = setInterval(async () => {
     try {
-      badgeVisible = !badgeVisible;
-
-      await chrome.action.setBadgeText({
-        text: badgeVisible ? "REC" : "",
-      });
+      await updateRecordingBadge();
     } catch (error) {
-      console.error("Badge blink failed:", error);
+      console.error("Badge timer update failed:", error);
     }
-  }, 700);
+  }, 1000);
 }
 
-function stopBadgeBlink() {
-  if (badgeBlinkInterval) {
-    clearInterval(badgeBlinkInterval);
-    badgeBlinkInterval = null;
+function stopBadgeTimer() {
+  if (badgeTimerInterval) {
+    clearInterval(badgeTimerInterval);
+    badgeTimerInterval = null;
   }
 
-  badgeVisible = true;
+  recordingStartedAt = null;
 }
 
 async function setRecordingState(isRecording, tabId = null) {
-  await chrome.storage.session.set({ isRecording, recordingTabId: tabId });
+  const { recordingStartedAt: storedStartedAt = null } =
+    await chrome.storage.session.get("recordingStartedAt");
+  const nextStartedAt = isRecording ? storedStartedAt || Date.now() : null;
+
+  await chrome.storage.session.set({
+    isRecording,
+    recordingTabId: tabId,
+    recordingStartedAt: nextStartedAt,
+  });
 
   await chrome.action.setTitle({
     title: isRecording ? "Stop Recording" : "Start Recording",
   });
 
   if (isRecording) {
-    await startBadgeBlink();
+    await startBadgeTimer(nextStartedAt);
   } else {
-    stopBadgeBlink();
+    stopBadgeTimer();
     await chrome.action.setBadgeText({ text: "" });
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "one-click-tab-recorder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "A no-account Chrome extension for recording the current tab.",
   "license": "MIT",
